@@ -276,3 +276,54 @@ BlogApiController 파일에 다음 코드를 추가
                 .andExpect(jsonPath("$[0].title").value(title));
     }
 ```
+
+# 블로그 글 조회 API 구현하기
+## 서비스 메서드 코드 작성하기 
+BlogService에 다음 코드 추가
+```java
+    public Article findById(long id) {
+        return blogRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("not found: " + id));
+    }
+```
+JPA에서 제공하는 findById 메서드를 사용하고 조회 결과가 없으면 IllegalArgumentException 예외를 발생한다.
+
+## 컨트롤러 메서드 코드 작성하기
+BlogApiController에 다음 코드 추가
+```java
+    @GetMapping("/api/articles/{id}")
+    public ResponseEntity<ArticleResponse> findArticle(@PathVariable long id) {
+        Article article = blogService.findById(id);
+        
+        return ResponseEntity.ok()
+                .body(new ArticleResponse(article));
+    }
+```
+@PathVariable 애너테이션은 URL에서 값을 가져오는 애너테이션이다. 이 애너테이션이 붙은 메서드의 동작 원리는 /api/articles/3 GET 요청을 받으면 id에 3이 들어온다. 그리고 앞서 만든 findById() 메서드로 넘어가 3번 블로그 글을 찾는다.
+
+## 테스트 코드 작성하기
+BlogApiControllerTest에 다음 코드를 추가
+```java
+    @DisplayName("findArticle: 블로그 글 조회에 성공한다.")
+    @Test
+    public void findArticle() throws  Exception {
+        //given
+        final String url = "/api/articles/{id}";
+        final String title = "title";
+        final String content = "content";
+
+        Article savedArticle = blogRepository.save(Article.builder()
+                .title(title)
+                .content(content)
+                .build());
+
+        //when
+        final ResultActions resultActions = mockMvc.perform(get(url, savedArticle.getId()));
+
+        //then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value(content))
+                .andExpect(jsonPath("$.title").value(title));
+    }
+```

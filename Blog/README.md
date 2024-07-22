@@ -199,3 +199,80 @@ class BlogApiControllerTest {
 - writeValueAsString() 메서드를 사용해서 객체를 Json으로 직렬화
 - MockMvc를 사용해 HTTP 메서드, URL, 요청 본문, 요청 타입 등을 설정한 뒤 설정한 내용을 바탕으로 테스트 요청 전송
 - contentType은 요청을 보낼 때 Json, XML 등 다양한 타입 중 하나를 골라 요청을 보낸다
+
+# 블로그 글 목록 조회를 위한 API 구현하기
+## 서비스 메서드 코드 작성하기
+BlogService 파일에 다음 함수를 추가한다.
+```java
+    public List<Article> findAll() {
+        return blogRepository.findAll();
+    }
+```
+- JPA 지원 메서드인 findAll()을 호출해 article 테이블에 저장되어 있는 모든 데이터를 조회한다.
+
+## 컨트롤러 메서드 코드 작성하기
+먼저 응답을 위한 DTO를 만든다. ArticleResponse 파일을 생성하고 다음과 같이 코드 작성
+```java
+@Getter
+public class ArticleResponse {
+    
+    private final String title;
+    private final String content;
+    
+    public ArticleResponse(Article article) {
+        this.title = article.getTitle();
+        this.content = article.getContent();
+    }
+}
+```
+다음으로는 BlogApiController 파일에 다음의 함수를 추가
+```java
+    @GetMapping("/api/articles/")
+    public ResponseEntity<List<ArticleResponse>> findAllArticles() {
+        List<ArticleResponse> articles = blogService.findAll()
+                .stream()
+                .map(ArticleResponse::new)
+                .toList();
+        
+        return ResponseEntity.ok()
+                .body(articles);
+    }
+```
+상태 코드 200과 함께 리스트를 HTTP 응답으로 반환한다
+
+## 실행 테스트하기
+테스트를 쉽게 하기 위해 data.sql 파일을 생성하고 다음과 같이 코드를 작성한다
+```sql
+INSERT INTO article (title, content) VALUES ('제목 1', '내용 1')
+INSERT INTO article (title, content) VALUES ('제목 2', '내용 2')
+INSERT INTO article (title, content) VALUES ('제목 3', '내용 3')
+```
+이제 스프링 부트를 다시 실행하고 포스트맨에서 글 전체 조회를 하면 sql로 입력한 데이터가 조회되는 것을 확인할 수 있다.
+
+## 테스트 코드 작성하기
+BlogApiController 파일에 다음 코드를 추가
+```java
+    @DisplayName("findAllArticles: 블로그 글 목록 조회에 성공한다.")
+    @Test
+    public void findAllArticles() throws Exception {
+        // given
+        final String url = "/api/articles";
+        final String title = "title";
+        final String content = "content";
+        
+        blogRepository.save(Article.builder()
+                .title(title)
+                .content(content)
+                .build());
+        
+        //when
+        final ResultActions resultActions = mockMvc.perform(get(url)
+                .accept(MediaType.APPLICATION_JSON));
+        
+        //then
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].content").value(content))
+                .andExpect(jsonPath("$[0].title").value(title));
+    }
+```

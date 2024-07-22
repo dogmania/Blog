@@ -327,3 +327,55 @@ BlogApiControllerTest에 다음 코드를 추가
                 .andExpect(jsonPath("$.title").value(title));
     }
 ```
+
+# 블로그 글 삭제 API 구현하기
+## 서비스 메서드 코드 작성하기
+BlogService에 다음 코드 추가
+```java
+    public void delete(long id) {
+        blogRepository.deleteById(id);
+    }
+```
+
+## 컨트롤러 메서드 코드 작성하기
+BlogApiController에 다음 코드 추가
+```java
+    @DeleteMapping("/api/articles/{id}")
+    public ResponseEntity<Void> deleteArticle(@PathVariable long id) {
+        blogService.delete(id);
+
+        return ResponseEntity.ok()
+                .build();
+    }
+```
+### 왜 delete에서만 build()를 호출하는 것인가?
+ResponseEntity.ok()는 기본적으로 ResponseEntity.BodyBuilder 객체를 반환한다. 이때 body() 함수를 사용하면 BodyBuilder에 본문을 추가하여 원하는 데이터를 반환할 수 있는 것.
+
+그런데 delete 함수에는 본문에 추가할 데이터가 없기 때문에 body() 함수를 호출하지 않고 대신 build() 함수를 호출하여 ResponseEntity<Void>를 반환할 수 있도록 한다. build()를 호출하지 않으면 ResponseEntity 객체가 생성되지 않는다.
+
+## 테스트 코드 작성하기
+BlogApiControllerTest에 다음 코드 추가
+```java
+    @DisplayName("deleteArticle: 블로그 글 삭제에 성공한다.")
+    @Test
+    public void deleteArticle() throws Exception {
+        //given
+        final String url = "/api/articles/{id}";
+        final String title = "title";
+        final String content = "content";
+
+        Article savedArticle = blogRepository.save(Article.builder()
+                .title(title)
+                .content(content)
+                .build());
+
+        //when
+        mockMvc.perform(delete(url, savedArticle.getId()))
+                .andExpect(status().isOk());
+
+        //then
+        List<Article> articles = blogRepository.findAll();
+
+        assertThat(articles).isEmpty();
+    }
+```

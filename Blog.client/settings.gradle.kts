@@ -21,3 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Blog.client"
 include(":app")
+include(":data")
+include(":domain")
+include(":presentation")

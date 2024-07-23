@@ -379,3 +379,83 @@ BlogApiControllerTest에 다음 코드 추가
         assertThat(articles).isEmpty();
     }
 ```
+
+# 블로그 글 수정 API 구현하기
+## 서비스 메서드 코드 작성하기
+엔티티에 요청받은 내용으로 값을 수정하는 메서드를 작성한다. Article 파일에 다음 코드를 추가한다.
+```java
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
+```
+그 다음으로는 블로그 글 수정 요청을 받을 DTO를 작성한다
+```java
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+public class UpdateArticleRequest {
+    private String title;
+    private String content;
+}
+```
+DTO까지 준비가 되었으면 BlogService에 다음 코드를 추가한다.
+```java
+    @Transactional  // 트랜잭션 메서드
+    public Article update(long id, UpdateArticleRequest request) {
+        Article article = blogRepository.findById(id)
+                .orElseThrow(() ->new IllegalArgumentException("not fount: " + id));
+        
+        article.update(request.getTitle(), request.getContent());
+        
+        return article;
+    }
+```
+- @Transactional 애너테이션은 매칭한 메서드를 하나의 트랜잭션으로 묶는 역할을 한다. 이를 통해 update() 메서드는 엔티티의 필드 값이 바뀌면 중간에 에러가 발생해도 제대로 된 값 수정을 보장하게 된다.
+
+## 컨트롤러 메서드 코드 작성하기
+BlogApiController에 다음 코드 추가
+```java
+    @PutMapping("/api/articles/{id}")
+    public ResponseEntity<Article> updateArticle(@PathVariable long id, @RequestBody UpdateArticleRequest request) {
+        Article updateArticle = blogService.update(id, request);
+        
+        return ResponseEntity.ok()
+                .body(updateArticle);
+    }
+```
+## 테스트 코드 작성하기
+BlogApiControllerTest에 다음 코드 추가
+```java
+    @DisplayName("updateArticle: 블로그 글 수정에 성공한다.")
+    @Test
+    public void updateArticle() throws Exception {
+        //given
+        final String url = "/api/articles/{id}";
+        final String title = "title";
+        final String content = "content";
+
+        Article savedArticle = blogRepository.save(Article.builder()
+                .title(title)
+                .content(content)
+                .build());
+
+        final String newTitle = "new title";
+        final String newContent = "new content";
+
+        UpdateArticleRequest updateArticleRequest = new UpdateArticleRequest(newTitle, newContent);
+
+        //when
+        ResultActions result = mockMvc.perform(put(url, savedArticle.getId())
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(objectMapper.writeValueAsString(updateArticleRequest)));
+
+        //then
+        result.andExpect(status().isOk());
+
+        Article article = blogRepository.findById(savedArticle.getId()).get();
+
+        assertThat(article.getTitle()).isEqualTo(newTitle);
+        assertThat(article.getContent()).isEqualTo(newContent);
+    }
+```

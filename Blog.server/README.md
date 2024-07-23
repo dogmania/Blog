@@ -459,3 +459,6 @@ BlogApiControllerTest에 다음 코드 추가
         assertThat(article.getContent()).isEqualTo(newContent);
     }
 ```
+
+# 블로그 글 목록 뷰 구현하기
+## 컨트롤러 메서드 작성하기

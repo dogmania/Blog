@@ -1,4 +1,4 @@
-package com.example.blogclient.module
+package com.example.data.di
 
 import android.content.Context
 import com.example.presentation.ui.util.Constants.BASE_URL

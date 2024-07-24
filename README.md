@@ -14,3 +14,6 @@
 
 ### 스프링
 - 회원가입, 로그인
+
+## 머리 아픈 트러블슈팅 기록
+https://velog.io/@hs4609/series/%EC%9A%B0%EB%8B%B9%ED%83%95%ED%83%95-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C-%EC%8A%A4%ED%94%84%EB%A7%81-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8-%EA%B8%B0%EB%A1%9D

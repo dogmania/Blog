@@ -1,6 +1,5 @@
-package com.example.presentation.screens.blogmain
+package com.example.presentation.screens.blog
 
-import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.domain.model.response.ArticleResponseVo
-import com.example.presentation.ui.screens.blogmain.BlogMainViewModel
 import com.example.presentation.ui.theme.BlogclientTheme
 import com.example.presentation.ui.theme.Gray
 

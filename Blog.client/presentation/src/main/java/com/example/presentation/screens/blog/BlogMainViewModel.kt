@@ -1,9 +1,9 @@
-package com.example.presentation.ui.screens.blogmain
+package com.example.presentation.screens.blog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.model.response.ArticleResponseVo
-import com.example.domain.usecase.GetAllArticlesUseCase
+import com.example.domain.usecase.blog.GetAllArticlesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

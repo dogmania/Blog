@@ -460,5 +460,22 @@ BlogApiControllerTest에 다음 코드 추가
     }
 ```
 
-# 블로그 글 목록 뷰 구현하기
-## 컨트롤러 메서드 작성하기
+## 엔티티에 생성, 수정 시간 추가하기
+Article 파일에 다음 코드 추가
+```java
+    @CreatedDate // 엔티티가 생성될 때 생성 시간 저장
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate // 엔티티가 수정될 때 수정 시간 저장
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+```
+- @CreatedDate 애너테이션을 사용하면 엔티티가 생성될 때 생성 시간을 created_at 컬럼에 저장한다. @LocalModifiedDate 애너테이션을 사용하면 엔티티가 수정될 때 마지막으로 수정된 시간을 updated_at 컬럼에 저장한다.
+
+## 수정된 엔티티를 반영하여 data.sql 파일 수정
+```sql
+INSERT INTO article (title, content, created_at, updated_at) VALUES ('제목 1', '내용 1', Now(), Now())
+INSERT INTO article (title, content, created_at, updated_at) VALUES ('제목 2', '내용 2', Now(), Now())
+INSERT INTO article (title, content, created_at, updated_at) VALUES ('제목 3', '내용 3', Now(), Now())
+```

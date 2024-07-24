@@ -29,15 +29,21 @@ import com.example.presentation.ui.theme.BlogclientTheme
 import com.example.presentation.ui.theme.Gray
 
 @Composable
-fun BlogMainScreen(
-    viewModel: BlogMainViewModel = hiltViewModel()
-) {
+fun BlogMainScreen() {
+    val viewModel: BlogMainViewModel = hiltViewModel()
     val allArticles = viewModel.allArticleList.collectAsState()
 
     LaunchedEffect(key1 = Unit) {
         viewModel.getAllArticles()
     }
 
+    BlogContent(articles = allArticles.value)
+}
+
+@Composable
+fun BlogContent(
+    articles: List<ArticleResponseVo>
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -70,7 +76,7 @@ fun BlogMainScreen(
                     .padding(10.dp)
                     .fillMaxSize()
             ) {
-                items(allArticles.value) { item ->
+                items(articles) { item ->
                     ArticleItem(item = item)
                 }
             }
@@ -104,6 +110,23 @@ fun ArticleItem(item: ArticleResponseVo) {
 @Composable
 fun PreviewBlogMain() {
     BlogclientTheme {
-        BlogMainScreen()
+        BlogContent(
+            articles = listOf(
+                ArticleResponseVo(
+                    id = 1,
+                    title = "title",
+                    content = "content",
+                    createdAt = "2024-07-24",
+                    updatedAt = "2024-07-24"
+                ),
+                ArticleResponseVo(
+                    id = 1,
+                    title = "title",
+                    content = "content",
+                    createdAt = "2024-07-24",
+                    updatedAt = "2024-07-24"
+                )
+            )
+        )
     }
 }

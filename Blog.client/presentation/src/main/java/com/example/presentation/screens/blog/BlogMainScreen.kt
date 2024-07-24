@@ -1,6 +1,5 @@
-package com.example.presentation.screens.blogmain
+package com.example.presentation.screens.blog
 
-import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -24,25 +24,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.domain.model.response.ArticleResponseVo
-import com.example.presentation.ui.screens.blogmain.BlogMainViewModel
 import com.example.presentation.ui.theme.BlogclientTheme
 import com.example.presentation.ui.theme.Gray
 
 @Composable
-fun BlogMainScreen() {
+fun BlogMainScreen(
+    goToWritePage: () -> Unit
+) {
     val viewModel: BlogMainViewModel = hiltViewModel()
     val allArticles = viewModel.allArticleList.collectAsState()
+    val onClickBtnWrite = {
+        goToWritePage()
+    }
 
     LaunchedEffect(key1 = Unit) {
         viewModel.getAllArticles()
     }
 
-    BlogContent(articles = allArticles.value)
+    BlogContent(articles = allArticles.value, onClickBtnWrite)
 }
 
 @Composable
 fun BlogContent(
-    articles: List<ArticleResponseVo>
+    articles: List<ArticleResponseVo>,
+    onClickBtnWrite: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -69,6 +74,16 @@ fun BlogContent(
                 Text(
                     text = "블로그에 오신 것을 환영합니다."
                 )
+
+                Spacer(modifier = Modifier.height(5.dp))
+
+                Button(
+                    onClick = { onClickBtnWrite() }
+                ) {
+                    Text(
+                        text = "글쓰기"
+                    )
+                }
             }
 
             LazyColumn(
@@ -126,7 +141,8 @@ fun PreviewBlogMain() {
                     createdAt = "2024-07-24",
                     updatedAt = "2024-07-24"
                 )
-            )
+            ),
+            {}
         )
     }
 }

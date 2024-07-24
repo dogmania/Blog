@@ -11,8 +11,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.presentation.screens.blogmain.BlogMainScreen
+import com.example.presentation.navigation.NavRoutes
+import com.example.presentation.screens.blog.BlogMainScreen
+import com.example.presentation.screens.blog.write.WriteBlogScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -42,8 +47,33 @@ fun MainScreen() {
                         bottom = paddingValue.calculateBottomPadding()
                     )
             ) {
-                BlogMainScreen()
+                NavigationHost(navController = navController)
             }
+        }
+    }
+}
+
+@Composable
+fun NavigationHost(
+    navController: NavHostController
+) {
+    val popScreen: () -> Unit = { navController.popBackStack() }
+
+    NavHost(
+        navController = navController,
+        startDestination = NavRoutes.BlogMainScreen.route
+    ) {
+        composable(NavRoutes.BlogMainScreen.route) {
+            val goToWriteBlogScreen = {
+                navController.navigate(NavRoutes.WriteBlogScreen.route)
+            }
+            BlogMainScreen(
+                goToWriteBlogScreen
+            )
+        }
+
+        composable(NavRoutes.WriteBlogScreen.route) {
+            WriteBlogScreen( popScreen )
         }
     }
 }

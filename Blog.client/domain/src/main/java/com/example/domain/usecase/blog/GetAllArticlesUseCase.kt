@@ -1,4 +1,4 @@
-package com.example.domain.usecase
+package com.example.domain.usecase.blog
 
 import com.example.domain.model.response.ArticleResponseVo
 import com.example.domain.repository.BlogRepository

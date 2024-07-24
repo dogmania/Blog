@@ -3,6 +3,7 @@ package com.example.data.repository
 import android.util.Log
 import com.example.data.datasource.BlogDataSource
 import com.example.data.mapper.ArticleResponseMapper
+import com.example.domain.model.request.ArticleRequestVo
 import com.example.domain.model.response.ArticleResponseVo
 import com.example.domain.repository.BlogRepository
 import kotlinx.coroutines.flow.Flow
@@ -23,5 +24,13 @@ class BlogRepositoryImpl @Inject constructor(
                 Log.e("BlogRepositoryImpl", e.stackTraceToString())
                 emit(emptyList())
             }
+    }
+
+    override suspend fun createArticle(request: ArticleRequestVo) {
+        kotlin.runCatching {
+            blogDataSource.createArticle(request)
+        }.onFailure { e ->
+            Log.e("createArticle", e.stackTraceToString())
+        }
     }
 }

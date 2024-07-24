@@ -1,7 +1,7 @@
 package com.example.data.di
 
 import android.content.Context
-import com.example.presentation.ui.util.Constants.BASE_URL
+import com.example.data.BuildConfig.BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

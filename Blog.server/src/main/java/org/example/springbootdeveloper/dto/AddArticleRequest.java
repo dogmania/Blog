@@ -1,9 +1,13 @@
 package org.example.springbootdeveloper.dto;
 
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.springbootdeveloper.domain.Article;
+
+import java.time.LocalDateTime;
 
 @NoArgsConstructor  // 기본 생성자 추가
 @AllArgsConstructor // 모든 필드 값을 파라미터로 받는 생성자 추가

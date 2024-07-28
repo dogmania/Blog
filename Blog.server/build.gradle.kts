@@ -24,6 +24,8 @@ dependencies {
     // 롬복
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
 
     // 타임리프
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")

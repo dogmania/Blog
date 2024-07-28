@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.presentation.navigation.NavRoutes
 import com.example.presentation.screens.blog.BlogMainScreen
 import com.example.presentation.screens.blog.write.WriteBlogScreen
+import com.example.presentation.screens.onboarding.signIn.SignInScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -61,7 +62,7 @@ fun NavigationHost(
 
     NavHost(
         navController = navController,
-        startDestination = NavRoutes.BlogMainScreen.route
+        startDestination = NavRoutes.SignInScreen.route
     ) {
         composable(NavRoutes.BlogMainScreen.route) {
             val goToWriteBlogScreen = {
@@ -75,11 +76,9 @@ fun NavigationHost(
         composable(NavRoutes.WriteBlogScreen.route) {
             WriteBlogScreen( popScreen )
         }
+
+        composable(NavRoutes.SignInScreen.route) {
+            SignInScreen()
+        }
     }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun MainPreview() {
-
 }

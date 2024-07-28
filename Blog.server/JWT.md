@@ -187,5 +187,332 @@ public class JwtFactory {
 
 다음으로는 TokenProvider 클래스를 테스트하는 클래스를 만든다. JwtFactory를 만든 디렉토리에 TokenProviderTest 파일을 만든다.
 ```java
+@SpringBootTest
+public class TokenProviderTest {
 
+    @Autowired
+    private TokenProvider tokenProvider;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private JwtProperties jwtProperties;
+
+    // generateToken() 검증 테스트
+    @DisplayName("generateToken(): 유저 정보와 만료 기간을 전달해 토큰을 만들 수 있다.")
+    @Test
+    void generateToken() {
+        // given
+        User testUser = userRepository.save(User.builder()
+                .email("user@gmail.com")
+                .password("test")
+                .build());
+        // when
+        String token = tokenProvider.generateToken(testUser, Duration.ofDays(14));
+
+        // then
+        Long userId = Jwts.parser()
+                .setSigningKey(jwtProperties.getSecretKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("id", Long.class);
+
+        assertThat(userId).isEqualTo(testUser.getId());
+    }
+
+    // validToken() 검증 테스트
+    @DisplayName("validToken(): 만료된 토큰일 때에 유효성 검증에 실패한다.")
+    @Test
+    void validToken_invalidToken() {
+        // given
+        String token = JwtFactory.builder()
+                .expiration(new Date(new Date().getTime() - Duration.ofDays(7).toMillis()))
+                .build()
+                .createToken(jwtProperties);
+
+        //when
+        boolean result = tokenProvider.validToken(token);
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @DisplayName("validToken(): 유효한 토큰일 때에 유효성 검증에 성공한다.")
+    @Test
+    void validToken_validToken() {
+        // given
+        String token = JwtFactory
+                .withDefaultValues()
+                .createToken(jwtProperties);
+
+        // when
+        boolean result = tokenProvider.validToken(token);
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    // getAuthentication() 검증 테스트
+    @DisplayName("getAuthentication(): 토큰 기반으로 인증 정보를 가져올 수 있다.")
+    @Test
+    void getAuthentication() {
+        // given
+        String userEmail = "user@email.com";
+        String token = JwtFactory.builder()
+                .subject(userEmail)
+                .build()
+                .createToken(jwtProperties);
+
+        // when
+        Authentication authentication = tokenProvider.getAuthentication(token);
+
+        // then
+        assertThat(((UserDetails) authentication.getPrincipal()).getUsername()).isEqualTo(userEmail);
+    }
+
+    // getUserId() 검증 테스트
+    @DisplayName("getUserId(): 토큰으로 유저 ID를 가져올 수 있다.")
+    @Test
+    void getUserId() {
+        // given
+        Long userId = 1L;
+        String token = JwtFactory.builder()
+                .claims(Map.of("id", userId))
+                .build()
+                .createToken(jwtProperties);
+
+        // when
+        Long userIdByToken = tokenProvider.getUserId(token);
+
+        // then
+        assertThat(userIdByToken).isEqualTo(userId);
+    }
+}
+```
+
+## 리프레시 토큰 도메인 구현하기
+리프레시 토큰은 데이터베이스에 저장하는 정보이므로 엔티티와 레포지토리를 추가해야 한다.
+domain에 리프레시 토큰 엔티티 파일을 생성한다.
+```java
+@NoArgsConstructor
+@Getter
+@Entity
+public class RefreshToken {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(updatable = false)
+    private Long id;
+    
+    @Column(nullable = false, unique = true)
+    private Long userId;
+    
+    @Column(nullable = false)
+    private String refreshToken;
+    
+    public RefreshToken(Long userId, String refreshToken) {
+        this.userId = userId;
+        this.refreshToken = refreshToken;
+    }
+    
+    public RefreshToken update(String newRefreshToken) {
+        this.refreshToken = newRefreshToken;
+        return this;
+    }
+}
+```
+다음으로는 repository에 RefreshTokenRepository 파일을 만든다
+```java
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
+    Optional<RefreshToken> findByUserId(Long userId);
+    Optional<RefreshToken> findByRefreshToken(String refreshToken);
+}
+```
+
+## 토큰 필터 구현하기
+필터는 실제로 각종 요청을 처리하기 위한 로직으로, 전달되기 전후에 URL 패턴에 맞는 모든 요청을 처리하는 기능을 제공한다. 요청이 오면 헤더값을 비교해서 토큰이 있는지 확인하고 유효 토큰이라면 시큐리티 콘텍스트 홀더에 인증 정보를 저장한다.
+
+![img_3.png](img_3.png)
+
+시큐리티 컨텍스트는 인증 객체가 저장되는 보관소이다.
+
+config 디렉토리에 TokenAuthenticationFilter 파일을 만든다. 이 필터는 액세스 토큰값이 담긴 Authorization 헤더값을 가져온 뒤 액세스 토큰이 유효하다면 인증 정보를 설정한다.
+```java
+@RequiredArgsConstructor
+public class TokenAuthenticationFilter extends OncePerRequestFilter {
+    private final TokenProvider tokenProvider;
+    private final static String HEADER_AUTHORIZATION = "Authorization";
+    private final static String TOKEN_PREFIX = "Bearer ";
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+        // 요청 헤더의 Authorization 키의 값 조회
+        String authorizationHeader = request.getHeader(HEADER_AUTHORIZATION);
+        // 가져온 값에서 접두사 제거
+        String token = getAccessToken(authorizationHeader);
+
+        // 가져온 토큰이 유효한지 확인하고, 유효한 때는 인증 정보 설정
+        if (tokenProvider.validToken(token)) {
+            Authentication authentication = tokenProvider.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private String getAccessToken(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith(TOKEN_PREFIX)) {
+            return authorizationHeader.substring(TOKEN_PREFIX.length());
+        }
+        return null;
+    }
+}
+```
+요청 헤더에서 키가 Authorization인 필드의 값을 가져온 다음 토큰의 접두사 Bearer를 제외한 값을 얻는다. 만약 값이 null이거나 Bearer로 시작하지 않으면 null을 반환한다. 토큰이 존재한다면, 가져온 토큰이 유효한지 확인하고 유효한 경우에 인증 정보를 관리하는 시큐리티 컨텍스트에 인증 정보를 설정한다. 위에서 작성한 코드가 실행되며 인증 정보가 컨텍스트 홀더에서 getAuthentication() 메서드를 사용해 인증 정보를 가져오면 유저 객체가 반환된다. 유저 객체에는 유저 이름과 권한 목록과 같은 인증 정보가 포함된다. 
+
+# 토큰 API 구현하기
+리프레시 토큰을 전달받아 검증하고, 유효한 리프레시 토큰이라면 새로운 액세스 토큰을 생성하는 API를 구현한다.
+
+## 토큰 서비스 추가하기
+UserService 파일에 전달받은 유저 ID로 유저를 검색해서 전달하는 findById() 메서드를 추가로 구현한다.
+```java
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Unexpected user"));
+    }
+```
+다음으로는 service 디렉토리에 RefreshTokenService 파일을 새로 만들어 전달받은 리프레시 토큰 객체를 검색해서 전달하는 findByRefreshToken() 메서드를 구현한다.
+```java
+@RequiredArgsConstructor
+@Service
+public class RefreshTokenService {
+    private final RefreshTokenRepository refreshTokenRepository;
+    
+    public RefreshToken findByRefreshToken(String refreshToken) {
+        return refreshTokenRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(() -> new IllegalArgumentException("Unexpected token"));
+    }
+}
+```
+다음으로는 토큰 서비스 클래스를 생성한다. service 디렉토리에 TokenService 파일을 생성해서 다음 코드를 입력한다. 
+```java
+@RequiredArgsConstructor
+@Service
+public class TokenService {
+    
+    private final TokenProvider tokenProvider;
+    private final RefreshTokenService refreshTokenService;
+    private final UserService userService;
+    
+    public String createNewAccessToken(String refreshToken) {
+        // 토큰 유효성 검사에 실패하면 예외 발생
+        if (!tokenProvider.validToken(refreshToken)) {
+            throw new IllegalArgumentException("Unexpected token");
+        }
+        
+        Long userId = refreshTokenService.findByRefreshToken(refreshToken).getUserId();
+        User user = userService.findById(userId);
+        
+        return tokenProvider.generateToken(user, Duration.ofHours(2));
+    }
+}
+```
+createNewAccessToken() 메서드는 전달받은 리프레시 토큰으로 토큰 유효성 검사를 진행하고, 유효한 토큰인 때 리프레시 토큰으로 사용자 ID를 찾는다. 마지막으로는 사용자 ID로 사용자를 찾은 후에 토큰 제공자의 generateToken() 메서드를 호출해서 새로운 액세스 토큰을 생성한다. 
+
+## 컨트롤러 추가하기
+토큰을 생성하고, 유효성을 검증하는 로직이 구현되었고 다음으로는 실제로 토큰을 발급받는 API를 생성한다. dto 패키지에 토큰 생성 요청 및 응답을 담당할 CreateAccessTokenRequest, CreateAccessTokenResponse 클래스를 만든다. 
+```java
+@Getter
+@Setter
+public class CreateAccessTokenRequest {
+    private String refreshToken;
+}
+
+@AllArgsConstructor
+@Getter
+public class CreateAccessTokenResponse {
+    private String accessToken;
+}
+```
+다음으로는 요청을 받고 처리할 컨트롤러를 생성한다. controller 패키지에 TokenApiController 파일을 만들고 코드를 입력한다.
+```java
+@RequiredArgsConstructor
+@RestController
+public class TokenApiController {
+    private final TokenService tokenService;
+    
+    @PostMapping("/api/token")
+    public ResponseEntity<CreateAccessTokenResponse> createNewAccessToken(@RequestBody CreateAccessTokenRequest request) {
+        String newAccessToken = tokenService.createNewAccessToken(request.getRefreshToken());
+        
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new CreateAccessTokenResponse(newAccessToken));
+    }
+}
+```
+
+## 테스트 코드 작성
+test/../controller 패키지에 TokenApiControllerTest 파일을 생성하고 createNewAccessToken() 메서드에 대해 테스트한다.
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+public class TokenApiControllerTest {
+    
+    @Autowired
+    protected MockMvc mockMvc;
+    @Autowired
+    protected ObjectMapper objectMapper;
+    @Autowired
+    private WebApplicationContext context;
+    @Autowired
+    JwtProperties jwtProperties;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
+    
+    @BeforeEach
+    public void mockMvcSetUp() {
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(context)
+                .build();
+        userRepository.deleteAll();
+    }
+    
+    @DisplayName("createNewAccessToken: 새로운 액세스 토큰을 발급한다.")
+    @Test
+    public void createNewAccessToken() throws Exception {
+        // given
+        final String url = "/api/token";
+        
+        User testUser = userRepository.save(User.builder()
+                .email("user@gmail.com")
+                .password("test")
+                .build());
+        
+        String refreshToken = JwtFactory.builder()
+                .claims(Map.of("id", testUser.getId()))
+                .build()
+                .createToken(jwtProperties);
+        
+        refreshTokenRepository.save(new RefreshToken(testUser.getId(), refreshToken));
+
+        CreateAccessTokenRequest request = new CreateAccessTokenRequest();
+        request.setRefreshToken(refreshToken);
+        final String requestBody = objectMapper.writeValueAsString(request);
+        
+        // when
+        ResultActions resultActions = mockMvc.perform(post(url)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(requestBody));
+        
+        // then
+        resultActions
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+    }
+}
 ```

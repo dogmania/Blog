@@ -31,6 +31,12 @@ dependencies {
     // 스프링 시큐리티
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
+
+    // JWT
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+    implementation("io.jsonwebtoken:jjwt-impl:0.12.5")
+    implementation("io.jsonwebtoken:jjwt-jackson:0.12.5")
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
 }
 
 tasks.test {

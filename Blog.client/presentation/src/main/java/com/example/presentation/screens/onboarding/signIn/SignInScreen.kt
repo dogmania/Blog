@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -26,14 +27,25 @@ import com.example.presentation.ui.theme.Gray
 import com.example.presentation.ui.theme.Main
 
 @Composable
-fun SignInScreen() {
+fun SignInScreen(
+    goToSignUp: () -> Unit
+) {
     val viewModel: SignInViewModel = hiltViewModel()
+    val onClickBtnLogin = { email: String, password: String ->
+        viewModel.login(email, password)
+    }
 
-    SignInContent()
+    SignInContent(goToSignUp, onClickBtnLogin = onClickBtnLogin)
 }
 
 @Composable
-fun SignInContent() {
+fun SignInContent(
+    goToSignUp: () -> Unit,
+    onClickBtnLogin: (String, String) -> Unit
+) {
+    val email = remember{ mutableStateOf("") }
+    val password = remember{ mutableStateOf("") }
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -43,12 +55,12 @@ fun SignInContent() {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            LoginTextField("아이디")
+            LoginTextField("아이디", email)
             Spacer(modifier = Modifier.height(5.dp))
-            LoginTextField("비밀번호")
+            LoginTextField("비밀번호", password)
             Spacer(modifier = Modifier.height(5.dp))
             Button(
-                onClick = { /*TODO*/ },
+                onClick = { onClickBtnLogin(email.value, password.value) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Main
@@ -59,7 +71,9 @@ fun SignInContent() {
                 )
             }
             Button(
-                onClick = { /*TODO*/ },
+                onClick = {
+                    goToSignUp()
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent
                 )
@@ -75,10 +89,9 @@ fun SignInContent() {
 
 @Composable
 fun LoginTextField(
-    placeholder: String = ""
+    placeholder: String = "",
+    input: MutableState<String>
 ) {
-    val input = remember{ mutableStateOf("") }
-
     OutlinedTextField(
         value = input.value,
         onValueChange = {
@@ -105,5 +118,10 @@ fun LoginTextField(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SignInPreview() {
-    SignInContent()
+    SignInContent(
+        {},
+        {
+            e: String, p: String -> Unit
+        }
+    )
 }

@@ -87,7 +87,7 @@ fun NavigationHost(
         }
 
         composable(NavRoutes.SignUpScreen.route) {
-            SignUpScreen()
+            SignUpScreen(popScreen)
         }
     }
 }

@@ -17,4 +17,8 @@ class BlogDataSource @Inject constructor(
     suspend fun createArticle(request: ArticleRequestVo) {
         blogService.createArticle(request)
     }
+
+    suspend fun getArticle(request: Long): Flow<ArticleResponseDto> = flow {
+        emit(blogService.getArticle(request))
+    }
 }

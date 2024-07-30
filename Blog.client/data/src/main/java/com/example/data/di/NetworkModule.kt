@@ -2,11 +2,14 @@ package com.example.data.di
 
 import android.content.Context
 import com.example.data.BuildConfig.BASE_URL
+import com.example.data.util.BlogDataStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -20,17 +23,21 @@ import javax.inject.Singleton
 object NetworkModule {
     @Singleton
     @Provides
-    fun provideOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
-        val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+    fun provideOkHttpClient(blogDataStore: BlogDataStore): OkHttpClient {
         val httpLoggingInterceptor = HttpLoggingInterceptor()
             .setLevel(HttpLoggingInterceptor.Level.BODY)
-        val headerInterceptor = Interceptor{
-            val refreshToken = sharedPreferences.getString("refreshToken", null)
-            val request = it.request()
-                .newBuilder()
-                .addHeader("Authorization", "Bearer $refreshToken")
-                .build()
-            return@Interceptor it.proceed(request)
+        val headerInterceptor = Interceptor{ chain ->
+            val tokenFlow = blogDataStore.accessToken
+            val token = runBlocking {
+                tokenFlow.first()
+            }
+            val request = chain.request().newBuilder()
+
+            token?.let {
+                request.addHeader("Authorization", "Bearer $it")
+            }
+
+            chain.proceed(request.build())
         }
         return OkHttpClient.Builder()
             .readTimeout(30, TimeUnit.SECONDS)

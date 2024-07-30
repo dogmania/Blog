@@ -11,6 +11,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,14 +22,25 @@ import com.example.presentation.screens.onboarding.signIn.LoginTextField
 import com.example.presentation.ui.theme.Main
 
 @Composable
-fun SignUpScreen() {
+fun SignUpScreen(
+    popScreen: () -> Unit
+) {
     val viewModel: SignUpViewModel = hiltViewModel()
+    val onClickBtnJoin = { email: String, password: String ->
+        viewModel.join(email, password)
+        popScreen()
+    }
 
-    SignUpContent()
+    SignUpContent(onClickBtnJoin)
 }
 
 @Composable
-fun SignUpContent() {
+fun SignUpContent(
+    onClickBtnJoin: (String, String) -> Unit
+) {
+    val email = remember{ mutableStateOf("") }
+    val password = remember{ mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize(),
@@ -38,12 +51,12 @@ fun SignUpContent() {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            LoginTextField("아이디")
+            LoginTextField("아이디", email)
             Spacer(modifier = Modifier.height(5.dp))
-            LoginTextField("비밀번호")
+            LoginTextField("비밀번호", password)
             Spacer(modifier = Modifier.height(5.dp))
             Button(
-                onClick = { /*TODO*/ },
+                onClick = { onClickBtnJoin(email.value, password.value) },
                 modifier = Modifier
                     .fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
@@ -61,5 +74,5 @@ fun SignUpContent() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SignUpScreenPreview() {
-    SignUpContent()
+    SignUpContent { email: String, password: String -> Unit }
 }

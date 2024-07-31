@@ -1,5 +1,6 @@
 package org.example.springbootdeveloper.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.example.springbootdeveloper.service.UserDetailService;
 import org.springframework.context.annotation.Bean;
@@ -32,14 +33,22 @@ public class WebSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests() // 인증, 인가 설정
-                .requestMatchers("/login", "/signup", "/user").permitAll()
+                .requestMatchers("/api/login", "/api/user").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .formLogin() // 폼 기반 로그인 설정
-                .loginPage("/login")
+                .formLogin().disable()// 폼 기반 로그인 설정
+                .httpBasic()
+                .and()
+                .exceptionHandling()
+                .authenticationEntryPoint((request, response, authException) ->
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized")
+                )
                 .and()
                 .logout() // 로그아웃 설정
-                .logoutSuccessUrl("/login")
+                .logoutUrl("/api/logout")
+                .logoutSuccessHandler((request, response, authentication) ->
+                        response.setStatus(HttpServletResponse.SC_OK)
+                )
                 .invalidateHttpSession(true)
                 .and()
                 .csrf().disable() // csrf 비활성화

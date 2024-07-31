@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class TokenApiController {
     private final TokenService tokenService;
 
-    @PostMapping("/api/token")
+    @PostMapping("/api/token") // 리프레시 토큰이 유효할 때 액세스 토큰을 만듦
     public ResponseEntity<CreateAccessTokenResponse> createNewAccessToken(@RequestBody CreateAccessTokenRequest request) {
         String newAccessToken = tokenService.createNewAccessToken(request.getRefreshToken());
 

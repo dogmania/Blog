@@ -34,7 +34,7 @@ public class UserService {
         Optional<User> user = userRepository.findByEmail(dto.getEmail());
         user.orElseThrow(() -> new UsernameNotFoundException("User not fount"));
 
-        if (!user.get().getPassword().equals(dto.getPassword())) {
+        if (!bCryptPasswordEncoder.matches(dto.getPassword(), user.get().getPassword())) {
             throw new BadCredentialsException("Password is incorrect");
         }
 

@@ -21,4 +21,8 @@ class BlogDataSource @Inject constructor(
     suspend fun getArticle(request: Long): Flow<ArticleResponseDto> = flow {
         emit(blogService.getArticle(request))
     }
+
+    suspend fun deleteArticle(request: Long) {
+        blogService.deleteArticle(request)
+    }
 }

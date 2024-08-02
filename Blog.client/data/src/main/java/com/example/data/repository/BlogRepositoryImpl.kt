@@ -33,4 +33,24 @@ class BlogRepositoryImpl @Inject constructor(
             Log.e("createArticle", e.stackTraceToString())
         }
     }
+
+    override suspend fun getArticle(request: Long): Flow<ArticleResponseVo> {
+        return blogDataSource.getArticle(request)
+            .map {
+                articleResponseMapper.dtoToVo(it)
+            }
+            .catch { e ->
+                Log.e("BlogRepositoryImpl getArticle", e.stackTraceToString())
+                emit(ArticleResponseVo())
+            }
+
+    }
+
+    override suspend fun deleteArticle(request: Long) {
+        kotlin.runCatching {
+            blogDataSource.deleteArticle(request)
+        }.onFailure { e ->
+            Log.e("deleteArticle", e.stackTraceToString())
+        }
+    }
 }

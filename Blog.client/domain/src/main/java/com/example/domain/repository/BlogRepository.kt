@@ -7,4 +7,6 @@ import kotlinx.coroutines.flow.Flow
 interface BlogRepository {
     suspend fun getAllArticles(): Flow<List<ArticleResponseVo>>
     suspend fun createArticle(request: ArticleRequestVo)
+    suspend fun getArticle(request: Long): Flow<ArticleResponseVo>
+    suspend fun deleteArticle(request: Long)
 }

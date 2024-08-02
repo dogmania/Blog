@@ -1,6 +1,7 @@
 package com.example.data.util
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -25,6 +26,7 @@ class BlogDataStore(context: Context) {
     suspend fun saveAccessToken(token: String) {
         dataStore.edit { preferences ->
             preferences[ACCESS_TOKEN_KEY] = token
+            Log.e("토큰 저장 확인", token)
         }
     }
 }

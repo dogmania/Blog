@@ -20,6 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,9 +42,12 @@ fun WriteBlogScreen(
     popScreen: () -> Unit
 ) {
     val viewModel: WriteBlogViewModel = hiltViewModel()
+    val completeWriteArticle by viewModel.completeWriteArticle.collectAsState()
     val title = remember{ mutableStateOf("") }
     val content = remember { mutableStateOf("") }
     val context = LocalContext.current
+
+    if (completeWriteArticle) popScreen()
 
     WriteBlogContent(
         onClickBtnClose = { popScreen() },
@@ -129,7 +135,8 @@ fun TitleInputField(
             saveTitle(it)
         },
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .height(60.dp),
         colors = TextFieldDefaults.colors(
             unfocusedContainerColor = Color.Transparent,
             focusedContainerColor = Color.Transparent,

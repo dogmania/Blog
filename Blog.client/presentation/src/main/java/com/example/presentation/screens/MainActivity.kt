@@ -82,8 +82,11 @@ fun NavigationHost(
             val goToSignUp = {
                 navController.navigate(NavRoutes.SignUpScreen.route)
             }
+            val goToBlogMain = {
+                navController.navigate(NavRoutes.BlogMainScreen.route)
+            }
 
-            SignInScreen(goToSignUp)
+            SignInScreen(goToSignUp = goToSignUp, goToBlogMain = goToBlogMain)
         }
 
         composable(NavRoutes.SignUpScreen.route) {

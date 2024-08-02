@@ -2,6 +2,7 @@ package org.example.springbootdeveloper.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.example.springbootdeveloper.config.jwt.TokenAuthenticationFilter;
 import org.example.springbootdeveloper.service.UserDetailService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.session.DisableEncodeUrlFilter;
 
 import static org.springframework.boot.autoconfigure.security.servlet.PathRequest.toH2Console;
 
@@ -19,6 +22,7 @@ import static org.springframework.boot.autoconfigure.security.servlet.PathReques
 public class WebSecurityConfig {
 
     private final UserDetailService userService;
+    private final TokenAuthenticationFilter authenticationFilter;
 
     // 스프링 시큐리티 기능 비활성화
     @Bean
@@ -52,6 +56,7 @@ public class WebSecurityConfig {
                 .invalidateHttpSession(true)
                 .and()
                 .csrf().disable() // csrf 비활성화
+                .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

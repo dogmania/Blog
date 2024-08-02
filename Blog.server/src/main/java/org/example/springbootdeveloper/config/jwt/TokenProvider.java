@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
 import org.example.springbootdeveloper.domain.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,6 +21,7 @@ import java.util.Set;
 public class TokenProvider {
 
     private final JwtProperties jwtProperties;
+    private static final Logger log = LoggerFactory.getLogger(TokenAuthenticationFilter.class);
 
     public String generateToken(User user, Duration expiredAt) {
         Date now = new Date();
@@ -49,6 +52,7 @@ public class TokenProvider {
 
             return true;
         } catch (Exception e) { // 복호화 과정에서 에러가 나면 유효하지 않은 토큰
+            log.info("Exception: " + e);
             return false;
         }
     }

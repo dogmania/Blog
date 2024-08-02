@@ -1,6 +1,7 @@
 package com.example.presentation.screens.blog
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +11,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,10 +30,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.domain.model.response.ArticleResponseVo
 import com.example.presentation.ui.theme.BlogclientTheme
 import com.example.presentation.ui.theme.Gray
+import com.example.presentation.util.StringFormatter
 
 @Composable
 fun BlogMainScreen(
-    goToWritePage: () -> Unit
+    goToWritePage: () -> Unit,
+    onClickArticleItem: (Long) -> Unit
 ) {
     val viewModel: BlogMainViewModel = hiltViewModel()
     val allArticles = viewModel.allArticleList.collectAsState()
@@ -41,13 +47,18 @@ fun BlogMainScreen(
         viewModel.getAllArticles()
     }
 
-    BlogContent(articles = allArticles.value, onClickBtnWrite)
+    BlogContent(
+        articles = allArticles.value,
+        onClickBtnWrite,
+        onClickArticleItem = onClickArticleItem
+    )
 }
 
 @Composable
 fun BlogContent(
     articles: List<ArticleResponseVo>,
-    onClickBtnWrite: () -> Unit
+    onClickBtnWrite: () -> Unit,
+    onClickArticleItem: (Long) -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -88,11 +99,14 @@ fun BlogContent(
 
             LazyColumn(
                 modifier = Modifier
-                    .padding(10.dp)
+                    .padding(horizontal = 10.dp)
                     .fillMaxSize()
             ) {
                 items(articles) { item ->
-                    ArticleItem(item = item)
+                    ArticleItem(
+                        item = item,
+                        onClickArticleItem = onClickArticleItem
+                    )
                 }
             }
         }
@@ -100,24 +114,39 @@ fun BlogContent(
 }
 
 @Composable
-fun ArticleItem(item: ArticleResponseVo) {
+fun ArticleItem(
+    item: ArticleResponseVo,
+    onClickArticleItem: (Long) -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(bottom = 5.dp)
+            .clickable {
+                onClickArticleItem(item.id)
+            }
     ) {
+        Spacer(modifier = Modifier.height(5.dp))
         Text(
-            text = item.title
+            text = item.title,
+            style = TextStyle(
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            ),
+            maxLines = 1
         )
         Text(
-            text = item.content
+            text = item.content,
+            style = TextStyle(
+                fontSize = 18.sp
+            ),
+            maxLines = 2
         )
         Text(
-            text = item.createdAt
+            text = StringFormatter.formatToMonthDay(item.createdAt)
         )
-        Text(
-            text = item.updatedAt
-        )
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(5.dp))
+        HorizontalDivider()
     }
 }
 
@@ -131,13 +160,13 @@ fun PreviewBlogMain() {
                     id = 1,
                     title = "title",
                     content = "content",
-                    createdAt = "2024-07-24",
+                    createdAt = "2024-07-24T22:43:48",
                     updatedAt = "2024-07-24"
                 ),
                 ArticleResponseVo(
                     id = 1,
                     title = "title",
-                    content = "content",
+                    content = "contentasngnrpgouwepofinas;lkdfnasjlkdgnpouqwbrgopiuwqaskdjvnaourwbgpwrbgaidjsvbpoiwauebviwubaisjdvbipauwrbev",
                     createdAt = "2024-07-24",
                     updatedAt = "2024-07-24"
                 )

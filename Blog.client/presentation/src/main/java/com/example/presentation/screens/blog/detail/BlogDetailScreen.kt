@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,6 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.presentation.base.Event
+import com.example.presentation.ui.theme.Main
 
 @Composable
 fun BlogDetailScreen(
@@ -39,18 +42,32 @@ fun BlogDetailScreen(
         viewModel.getArticle(id)
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.eventFlow.collect { event: Event ->
+            when(event) {
+                is BlogDetailEvent.PopScreen -> popScreen()
+            }
+        }
+    }
+
     BlogDetailContent(
+        id = id,
         title = article.value.title,
         content = article.value.content,
-        popScreen = popScreen
+        popScreen = popScreen,
+        onClickBtnDelete = {
+            viewModel.deleteArticle(id)
+        }
     )
 }
 
 @Composable
 fun BlogDetailContent(
+    id: Long,
     title: String,
     content: String,
-    popScreen: () -> Unit = {}
+    popScreen: () -> Unit = {},
+    onClickBtnDelete: (Long) -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -61,7 +78,9 @@ fun BlogDetailContent(
                 .fillMaxSize()
         ) {
             BlogDetailTopBar(
-                popScreen = popScreen
+                popScreen = popScreen,
+                id = id,
+                onClickBtnDelete = onClickBtnDelete
             )
 
             HorizontalDivider()
@@ -96,7 +115,9 @@ fun BlogDetailContent(
 
 @Composable
 fun BlogDetailTopBar(
-    popScreen: () -> Unit = {}
+    id: Long,
+    popScreen: () -> Unit = {},
+    onClickBtnDelete: (Long) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -113,9 +134,14 @@ fun BlogDetailTopBar(
         Spacer(modifier = Modifier.weight(1f))
 
         Button(
-            onClick = {  },
+            onClick = {
+                onClickBtnDelete(id)
+            },
             modifier = Modifier
-                .height(35.dp)
+                .height(35.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Main
+            )
         ) {
             Text(
                 text = "삭제",
@@ -131,6 +157,7 @@ fun BlogDetailTopBar(
 fun BlogDetailContentPreview() {
     BlogDetailContent(
         title = "제목",
-        content = "내용"
+        content = "내용",
+        id = -1
     )
 }

@@ -12,11 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.presentation.navigation.NavRoutes
 import com.example.presentation.screens.blog.BlogMainScreen
+import com.example.presentation.screens.blog.detail.BlogDetailScreen
 import com.example.presentation.screens.blog.write.WriteBlogScreen
 import com.example.presentation.screens.onboarding.signIn.SignInScreen
 import com.example.presentation.screens.onboarding.signUp.SignUpScreen
@@ -69,8 +72,13 @@ fun NavigationHost(
             val goToWriteBlogScreen = {
                 navController.navigate(NavRoutes.WriteBlogScreen.route)
             }
+            val onClickArticleItem = { id: Long ->
+                navController.navigate(NavRoutes.BlogDetailScreen.createRoute(id))
+            }
+
             BlogMainScreen(
-                goToWriteBlogScreen
+                goToWriteBlogScreen,
+                onClickArticleItem = onClickArticleItem
             )
         }
 
@@ -91,6 +99,15 @@ fun NavigationHost(
 
         composable(NavRoutes.SignUpScreen.route) {
             SignUpScreen(popScreen)
+        }
+
+        composable(
+            "${ NavRoutes.BlogDetailScreen.route }/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.LongType } )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("id") ?: 0
+            
+            BlogDetailScreen(id = id, popScreen = popScreen)
         }
     }
 }
